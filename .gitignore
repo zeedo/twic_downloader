@@ -1,2 +1,3 @@
 .venv
 twic_downloads
+twic_downloads_cache.sqlite
