@@ -2,9 +2,9 @@ from datetime import timedelta
 import logging
 import os
 import requests_cache
-import xml.etree.ElementTree as ET
 import pandas as pd
 import zipfile
+from sqlitedict import SqliteDict
 # Log everything, and send it to stderr.
 logging.basicConfig(level=logging.INFO,format='%(levelname)s -:- %(message)s')
 
@@ -12,6 +12,7 @@ if __name__ == "__main__":
     # Set Header and Cachin options
     # The main page only updates weekly, zips should never change so just cache them forever
     # Cache file can always be cleared out manually for space
+
     url_expiry = {
         'https://theweekinchess.com/twic': timedelta(days=1),
         'https://theweekinchess.com/zips/*': -1, # Never
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     logging.info(f"Downloading URL: {url}")
     logging.info("....... (CACHED!)" if response.from_cache else "....... Downloaded")
     # Table is named "TWIC Downloads"
-    tables = pd.read_html(response.text, match='TWIC Downloads')
+    tables = pd.read_html(response.text, match='TWIC Downloads',parse_dates=True)
     twic_downloads_table = tables[0]
     # logging.info(twic_downloads_table.head())
 
@@ -37,9 +38,21 @@ if __name__ == "__main__":
     row = list(twic_downloads_table.loc[0])
     twic_id = row[0]
     twic_date = row[1]
-    logging.info(f"Last TWIC Update {twic_date} : {twic_id}")
+    logging.info(f"Last TWIC Update:\t {twic_date} : {twic_id}")
+    with SqliteDict('./twic_downloader_saveddata.sqlite', autocommit=True) as saved_data:
+        if 'last_download_date' in saved_data:
+            logging.info(f"Last Download:\t\t {saved_data['last_download_date']} : {saved_data['last_download_id']} ")
+            if twic_date in saved_data['last_download_date']:
+                logging.info(f"No new games :-(")
+                exit()
+        # Saving the latest id and date for checking on next run.
+        saved_data['last_download_id'] = twic_id
+        saved_data['last_download_date'] = twic_date
 
-    # Run through each item inm the table
+
+    # Run through each item in the table
+    # We could just download the newest, but we're checking incase me miss a run and there's more than one game
+    # to download.
     for item in twic_downloads_table.iterrows():
         item = dict(item[1])
         twic_id = item[('TWIC Downloads', 'TWIC')]
