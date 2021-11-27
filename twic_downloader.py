@@ -1,6 +1,7 @@
 from datetime import timedelta
 import logging
 import os
+import time
 import requests_cache
 import pandas as pd
 import zipfile
@@ -33,6 +34,10 @@ if __name__ == "__main__":
     # Table is named "TWIC Downloads"
     tables = pd.read_html(response.text, match='TWIC Downloads',parse_dates=True)
     twic_downloads_table = tables[0]
+
+
+    # twic_downloads_table = tables
+
     # logging.info(twic_downloads_table.head())
 
     # Show top table item (We're assuming new is at the top, consider sorting in future)    
@@ -53,10 +58,9 @@ if __name__ == "__main__":
     # Run through each item in the table
     # We could just download the newest, but we're checking incase me miss a run and there's more than one game
     # to download.
-    for item in twic_downloads_table.iterrows():
-        item = dict(item[1])
-        twic_id = item[('TWIC Downloads', 'TWIC')]
-        twic_date = item[('TWIC Downloads', 'Date')]
+    for _,item in twic_downloads_table.iterrows(): # Throw away the index
+        twic_id = item[0]
+        twic_date = item[1]
         twic_zip = f"twic{twic_id}g.zip"
         twic_pgn = f"twic{twic_id}.pgn"
         twic_url = f"https://theweekinchess.com/zips/{twic_zip}"
