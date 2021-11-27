@@ -34,12 +34,8 @@ if __name__ == "__main__":
     # Table is named "TWIC Downloads"
     tables = pd.read_html(response.text, match='TWIC Downloads',parse_dates=True)
     twic_downloads_table = tables[0]
-
-
-    # twic_downloads_table = tables
-
-    # logging.info(twic_downloads_table.head())
-
+    # First line in the DB is a bit messy, so label the column headings we need for clarity.
+    twic_downloads_table.columns = ['TWIC_ID', 'Date',2,3,4,5,6,7]
     # Show top table item (We're assuming new is at the top, consider sorting in future)    
     twic_id = twic_downloads_table.iloc[0,0] # row 0 column 0
     twic_date = twic_downloads_table.iloc[0,1] # row 0 column 1
@@ -59,8 +55,8 @@ if __name__ == "__main__":
     # We could just download the newest, but we're checking incase me miss a run and there's more than one game
     # to download.
     for _,item in twic_downloads_table.iterrows(): # Throw away the index
-        twic_id = item[0]
-        twic_date = item[1]
+        twic_id = item['TWIC_ID']
+        twic_date = item['Date']
         twic_zip = f"twic{twic_id}g.zip"
         twic_pgn = f"twic{twic_id}.pgn"
         twic_url = f"https://theweekinchess.com/zips/{twic_zip}"
