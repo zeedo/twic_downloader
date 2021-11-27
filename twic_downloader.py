@@ -10,11 +10,12 @@ from sqlitedict import SqliteDict
 # TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
 logging.basicConfig(level=logging.INFO,format='%(levelname)s -:- %(message)s')
 
-if __name__ == "__main__":
+
     # Set Header and Cachin options
     # The main page only updates weekly, zips should never change so just cache them forever
     # Cache file can always be cleared out manually for space
 
+def main():
     url_expiry = {
         'https://theweekinchess.com/twic': timedelta(days=1),
         'https://theweekinchess.com/zips/*': -1, # Never
@@ -83,3 +84,6 @@ if __name__ == "__main__":
         else:
             # Yes we have the file, just print OK.
             logging.info("....... OK!")
+
+if __name__ == "__main__":
+    main()
