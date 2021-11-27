@@ -6,6 +6,7 @@ import pandas as pd
 import zipfile
 from sqlitedict import SqliteDict
 # Log everything, and send it to stderr.
+# TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
 logging.basicConfig(level=logging.INFO,format='%(levelname)s -:- %(message)s')
 
 if __name__ == "__main__":
@@ -34,10 +35,9 @@ if __name__ == "__main__":
     twic_downloads_table = tables[0]
     # logging.info(twic_downloads_table.head())
 
-    # Show top table item (We're assuming new is at the top, consideri sorting in future)
-    row = list(twic_downloads_table.loc[0])
-    twic_id = row[0]
-    twic_date = row[1]
+    # Show top table item (We're assuming new is at the top, consider sorting in future)    
+    twic_id = twic_downloads_table.iloc[0,0] # row 0 column 0
+    twic_date = twic_downloads_table.iloc[0,1] # row 0 column 1
     logging.info(f"Last TWIC Update:\t {twic_date} : {twic_id}")
     with SqliteDict('./twic_downloader_saveddata.sqlite', autocommit=True) as saved_data:
         if 'last_download_date' in saved_data:
