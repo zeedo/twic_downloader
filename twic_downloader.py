@@ -38,8 +38,8 @@ def main():
     # First line in the DB is a bit messy, so label the column headings we need for clarity.
     twic_downloads_table.columns = ['TWIC_ID', 'Date',2,3,4,5,6,7]
     # Show top table item (We're assuming new is at the top, consider sorting in future)    
-    twic_id = twic_downloads_table.iloc[0,0] # row 0 column 0
-    twic_date = twic_downloads_table.iloc[0,1] # row 0 column 1
+    twic_id = twic_downloads_table.loc[0,'Date'] # row 0 column 0
+    twic_date = twic_downloads_table.loc[0,'TWIC_ID'] # row 0 column 1
     logging.info(f"Last TWIC Update:\t {twic_date} : {twic_id}")
     with SqliteDict('./twic_downloader_saveddata.sqlite', autocommit=True) as saved_data:
         if 'last_download_date' in saved_data:
