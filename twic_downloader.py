@@ -36,19 +36,20 @@ def main():
         "....... (CACHED!)" if response.from_cache else "....... Downloaded")
     # Table is named "TWIC Downloads"
     tables = pd.read_html(
-        response.text, match='TWIC Downloads', parse_dates=True)
+        response.text, match='TWIC Downloads')
     twic_downloads_table = tables[0]
     # First line in the DB is a bit messy, so label the column headings we need for clarity.
     twic_downloads_table.columns = ['TWIC_ID', 'Date', 2, 3, 4, 5, 6, 7]
+    twic_downloads_table['Date'] = pd.to_datetime(twic_downloads_table['Date'])
     # Show top table item (We're assuming new is at the top, consider sorting in future)
-    twic_id = twic_downloads_table.loc[0, 'Date']  # row 0 column 0
-    twic_date = twic_downloads_table.loc[0, 'TWIC_ID']  # row 0 column 1
-    logging.info(f"Last TWIC Update:\t {twic_date} : {twic_id}")
+    twic_id = twic_downloads_table.loc[0, 'TWIC_ID']  # row 0 column 0
+    twic_date = twic_downloads_table.loc[0, 'Date']  # row 0 column 1
+    logging.info(f"Last TWIC Update:\t {twic_date:%Y-%m-%d} : {twic_id}")
     with SqliteDict('./twic_downloader_saveddata.sqlite', autocommit=True) as saved_data:
         if 'last_download_date' in saved_data:
             logging.info(
-                f"Last Download:\t\t {saved_data['last_download_date']} : {saved_data['last_download_id']} ")
-            if twic_date in saved_data['last_download_date']:
+                f"Last Download:\t\t {saved_data['last_download_date']:%Y-%m-%d} : {saved_data['last_download_id']} ")
+            if twic_date == saved_data['last_download_date']:
                 logging.info(f"No new games :-(")
                 exit()
         # Saving the latest id and date for checking on next run.
