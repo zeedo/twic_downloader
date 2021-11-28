@@ -7,7 +7,7 @@ import zipfile
 from sqlitedict import SqliteDict
 # Log everything, and send it to stderr.
 # TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
-logging.basicConfig(level=logging.INFO, format='%(levelname)s -:- %(message)s')
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)-8s %(name)-12s-:-  %(message)s')
 
 
 def main():
@@ -27,8 +27,6 @@ def main():
 
         for _, item in twic_downloads_table.iterrows():  # Throw away the index
             download_twic_pgn(twic, item)
-
-
 
 
 
@@ -83,8 +81,7 @@ def download_main_page(twic):
     # Download Main Page
     response = twic.get(url)
     logging.info(f"Downloading URL: {url}")
-    logging.info(
-        f"....... (CACHED! Expires {response.expires})" if response.from_cache else "....... Downloaded")
+    check_cached(response)
     # Table is named "TWIC Downloads"
     return response
 
@@ -103,8 +100,7 @@ def download_twic_pgn(twic, item):
         response = twic.get(f"https://theweekinchess.com/zips/{twic_zip}")
         logging.warning(f"{twic_pgn} Missing!")
         logging.info(f"Downloading... {twic_url}")
-        logging.info(
-            f"....... (CACHED! Expires {response.expires})" if response.from_cache else "....... Downloaded")
+        check_cached(response)
 
         with open(f"./twic_downloads/{twic_zip}", "wb") as file:
             file.write(response.content)
@@ -120,6 +116,12 @@ def download_twic_pgn(twic, item):
     else:
         # Yes we have the file, just print OK.
         logging.info("....... OK!")
+
+def check_cached(response):
+    if response.from_cache:
+        logging.warning(f"....... (CACHED! Expires {response.expires})")
+    else:
+        logging.info("....... Downloaded")
 
 
 if __name__ == "__main__":
