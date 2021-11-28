@@ -12,9 +12,14 @@ from sqlitedict import SqliteDict
 
 # TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
 
+
+# Add logging to log file
+log_path = "./logs/"
+log_file = "twic_downloader.log"
+
 # rich.logging provides a colourful log output.
 logging.basicConfig(level=logging.INFO,
-                    format='%(name)-15s-:-  %(message)s',handlers=[RichHandler()])
+                    format='%(name)-15s-:-  %(message)s',handlers=[RichHandler(),logging.FileHandler(f"{log_path}/{log_file}")])
 log = logging.getLogger(__name__)
 
 def main():
