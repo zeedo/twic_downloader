@@ -8,6 +8,16 @@ from rich.logging import RichHandler
 import pandas as pd
 import requests_cache
 from sqlitedict import SqliteDict
+from pushbullet import Pushbullet
+
+from dotenv import load_dotenv
+
+# Get config info from .env files.
+load_dotenv()
+PUSH_BULLET_API_KEY = os.getenv('PUSH_BULLET_API_KEY')
+FORCE_SKIP_NEW_GAMES_CHECK = os.getenv('FORCE_SKIP_NEW_GAMES_CHECK')
+pb = Pushbullet(PUSH_BULLET_API_KEY)
+print(PUSH_BULLET_API_KEY)
 
 
 # TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
@@ -36,7 +46,6 @@ def main():
         # Run through each item in the table
         # We could just download the newest, but we're checking incase me miss a run and there's more than one game
         # to download.
-
         for _, twic_row in twic_downloads_table.iterrows():  # Throw away the index
             download_twic_pgn(twic_session, twic_row)
     else:
@@ -128,6 +137,7 @@ def download_twic_pgn(twic_session, twic_row):
             # Delete the zip (we'll have copy in cache)
         if(os.path.exists(f"./twic_downloads/{twic_pgn}")):
             os.remove(f"./twic_downloads/{twic_zip}")
+        push = pb.push_link("New Chess Games!", f"https://theweekinchess.com/html/{twic_id}.html")
 
     else:
         # Yes we have the file, just print OK.
