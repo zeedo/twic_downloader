@@ -40,9 +40,7 @@ def main():
 
     twic_downloads_table = parse_downloads_table(response)
 
-    if not check_new_twic_issue(twic_downloads_table):
-        exit()
-    else:
+    if check_new_twic_issue(twic_downloads_table) or FORCE_SKIP_NEW_GAMES_CHECK == "1": # Dotenv doesn't do booleans - just strings
         # Run through each item in the table
         # We could just download the newest, but we're checking incase me miss a run and there's more than one game
         # to download.
