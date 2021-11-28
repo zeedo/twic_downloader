@@ -39,6 +39,10 @@ def main():
 
         for _, twic_row in twic_downloads_table.iterrows():  # Throw away the index
             download_twic_pgn(twic_session, twic_row)
+    else:
+        exit()
+
+
 
 
 def check_new_twic_issue(twic_downloads_table):
