@@ -40,7 +40,7 @@ def check_new_twic_issue(twic_downloads_table):
     with SqliteDict('./twic_downloader_saveddata.sqlite', autocommit=True) as saved_data:
         if 'last_download_date' in saved_data:
             logging.info(
-                f"Last Download:\t\t {saved_data['last_download_date']:%Y-%m-%d} : {saved_data['last_download_id']} ")
+                f"Last Download:\t {saved_data['last_download_date']:%Y-%m-%d} : {saved_data['last_download_id']} ")
             if twic_date == saved_data['last_download_date']:
                 logging.info(f"No new games :-(")
                 return False
