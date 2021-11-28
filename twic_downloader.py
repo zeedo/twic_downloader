@@ -1,20 +1,23 @@
-from datetime import timedelta
 import logging
 import os
-import requests_cache
-import pandas as pd
 import zipfile
+from datetime import timedelta
+
+import pandas as pd
+import requests_cache
 from sqlitedict import SqliteDict
+
 # Log everything, and send it to stderr.
 # TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)-8s %(name)-12s-:-  %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='[%(asctime)s] %(levelname)-8s %(name)-12s-:-  %(message)s')
 
 
 def main():
 
-    twic = setup_twic_session()
+    twic_session = setup_twic_session()
 
-    response = download_main_page(twic)
+    response = download_main_page(twic_session)
 
     twic_downloads_table = parse_downloads_table(response)
 
@@ -25,9 +28,8 @@ def main():
         # We could just download the newest, but we're checking incase me miss a run and there's more than one game
         # to download.
 
-        for _, item in twic_downloads_table.iterrows():  # Throw away the index
-            download_twic_pgn(twic, item)
-
+        for _, twic_row in twic_downloads_table.iterrows():  # Throw away the index
+            download_twic_pgn(twic_session, twic_row)
 
 
 def check_new_twic_issue(twic_downloads_table):
@@ -74,21 +76,21 @@ def setup_twic_session():
     return twic
 
 
-def download_main_page(twic):
+def download_main_page(twic_session):
     # Main Page URL
     url = 'https://theweekinchess.com/twic'
 
     # Download Main Page
-    response = twic.get(url)
+    response = twic_session.get(url)
     logging.info(f"Downloading URL: {url}")
     check_cached(response)
     # Table is named "TWIC Downloads"
     return response
 
 
-def download_twic_pgn(twic, item):
-    twic_id = item['TWIC_ID']
-    twic_date = item['Date']
+def download_twic_pgn(twic_session, twic_row):
+    twic_id = twic_row['TWIC_ID']
+    twic_date = twic_row['Date']
     twic_zip = f"twic{twic_id}g.zip"
     twic_pgn = f"twic{twic_id}.pgn"
     twic_url = f"https://theweekinchess.com/zips/{twic_zip}"
@@ -97,7 +99,8 @@ def download_twic_pgn(twic, item):
 
     # Have we already got the PGN with this twic_id?
     if(not os.path.exists(f"./twic_downloads/{twic_pgn}")):
-        response = twic.get(f"https://theweekinchess.com/zips/{twic_zip}")
+        response = twic_session.get(
+            f"https://theweekinchess.com/zips/{twic_zip}")
         logging.warning(f"{twic_pgn} Missing!")
         logging.info(f"Downloading... {twic_url}")
         check_cached(response)
@@ -116,6 +119,7 @@ def download_twic_pgn(twic, item):
     else:
         # Yes we have the file, just print OK.
         logging.info("....... OK!")
+
 
 def check_cached(response):
     if response.from_cache:
