@@ -2,16 +2,20 @@ import logging
 import os
 import zipfile
 from datetime import timedelta
+from rich.logging import RichHandler
+
 
 import pandas as pd
 import requests_cache
 from sqlitedict import SqliteDict
 
-# Log everything, and send it to stderr.
-# TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
-logging.basicConfig(level=logging.INFO,
-                    format='[%(asctime)s] %(levelname)-8s %(name)-12s-:-  %(message)s')
 
+# TODO: Imeplement a command line option to download a range and optionally add them to a bulk PGN for chessbase import.
+
+# rich.logging provides a colourful log output.
+logging.basicConfig(level=logging.INFO,
+                    format='%(name)-15s-:-  %(message)s',handlers=[RichHandler()])
+log = logging.getLogger(__name__)
 
 def main():
 
@@ -36,13 +40,13 @@ def check_new_twic_issue(twic_downloads_table):
     # Show top table item (We're assuming new is at the top, consider sorting in future)
     twic_id = twic_downloads_table.loc[0, 'TWIC_ID']  # row 0 column 0
     twic_date = twic_downloads_table.loc[0, 'Date']  # row 0 column 1
-    logging.info(f"Last TWIC Update:\t {twic_date:%Y-%m-%d} : {twic_id}")
+    log.info(f"Last TWIC Update:\t {twic_date:%Y-%m-%d} : {twic_id}")
     with SqliteDict('./twic_downloader_saveddata.sqlite', autocommit=True) as saved_data:
         if 'last_download_date' in saved_data:
-            logging.info(
+            log.info(
                 f"Last Download:\t {saved_data['last_download_date']:%Y-%m-%d} : {saved_data['last_download_id']} ")
             if twic_date == saved_data['last_download_date']:
-                logging.info(f"No new games :-(")
+                log.error(f"No new games :-(")
                 return False
         # Saving the latest id and date for checking on next run.
         saved_data['last_download_id'] = twic_id
@@ -82,7 +86,7 @@ def download_main_page(twic_session):
 
     # Download Main Page
     response = twic_session.get(url)
-    logging.info(f"Downloading URL: {url}")
+    log.info(f"Downloading URL: {url}")
     check_cached(response)
     # Table is named "TWIC Downloads"
     return response
@@ -94,22 +98,22 @@ def download_twic_pgn(twic_session, twic_row):
     twic_zip = f"twic{twic_id}g.zip"
     twic_pgn = f"twic{twic_id}.pgn"
     twic_url = f"https://theweekinchess.com/zips/{twic_zip}"
-    logging.info(
+    log.info(
         f"TWIC ID: {twic_id}\tUpload Date: {twic_date}\t  PGN: {twic_pgn}")
 
     # Have we already got the PGN with this twic_id?
     if(not os.path.exists(f"./twic_downloads/{twic_pgn}")):
         response = twic_session.get(
             f"https://theweekinchess.com/zips/{twic_zip}")
-        logging.warning(f"{twic_pgn} Missing!")
-        logging.info(f"Downloading... {twic_url}")
+        log.warning(f"{twic_pgn} Missing!")
+        log.info(f"Downloading... {twic_url}")
         check_cached(response)
 
         with open(f"./twic_downloads/{twic_zip}", "wb") as file:
             file.write(response.content)
 
             # Unzip the downloaded file
-        logging.info(f"Unzipping... {twic_zip}")
+        log.info(f"Unzipping... {twic_zip}")
         with zipfile.ZipFile(f"./twic_downloads/{twic_zip}", "r") as zip_ref:
             zip_ref.extractall("./twic_downloads")
             # Delete the zip (we'll have copy in cache)
@@ -118,14 +122,14 @@ def download_twic_pgn(twic_session, twic_row):
 
     else:
         # Yes we have the file, just print OK.
-        logging.info("....... OK!")
+        log.info("....... OK!")
 
 
 def check_cached(response):
     if response.from_cache:
-        logging.warning(f"....... (CACHED! Expires {response.expires})")
+        log.warning(f"....... (CACHED! Expires {response.expires})")
     else:
-        logging.info("....... Downloaded")
+        log.info("....... Downloaded")
 
 
 if __name__ == "__main__":
