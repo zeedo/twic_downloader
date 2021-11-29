@@ -29,8 +29,9 @@ log_file = "twic_downloader.log"
 
 # rich.logging provides a colourful log output.
 logging.basicConfig(level=logging.INFO,
-                    format='%(name)-15s-:-  %(message)s',handlers=[RichHandler(),logging.FileHandler(f"{log_path}/{log_file}")])
+                    format='%(name)-15s-:-  %(message)s', handlers=[RichHandler(), logging.FileHandler(f"{log_path}/{log_file}")])
 log = logging.getLogger(__name__)
+
 
 def main():
 
@@ -40,7 +41,8 @@ def main():
 
     twic_downloads_table = parse_downloads_table(response)
 
-    if check_new_twic_issue(twic_downloads_table) or FORCE_SKIP_NEW_GAMES_CHECK == "1": # Dotenv doesn't do booleans - just strings
+    # Dotenv doesn't do booleans - just strings
+    if check_new_twic_issue(twic_downloads_table) or FORCE_SKIP_NEW_GAMES_CHECK == "1":
         # Run through each item in the table
         # We could just download the newest, but we're checking incase me miss a run and there's more than one game
         # to download.
@@ -48,8 +50,6 @@ def main():
             download_twic_pgn(twic_session, twic_row)
     else:
         exit()
-
-
 
 
 def check_new_twic_issue(twic_downloads_table):
@@ -62,7 +62,7 @@ def check_new_twic_issue(twic_downloads_table):
             log.info(
                 f"Last Download:\t {saved_data['last_download_date']:%Y-%m-%d} : {saved_data['last_download_id']} ")
             if twic_date == saved_data['last_download_date']:
-                log.error(f"No new games :-(")
+                log.error('No new games :-(')
                 return False
         # Saving the latest id and date for checking on next run.
         saved_data['last_download_id'] = twic_id
@@ -119,6 +119,7 @@ def download_twic_pgn(twic_session, twic_row):
 
     # Have we already got the PGN with this twic_id?
     if(not os.path.exists(f"./twic_downloads/{twic_pgn}")):
+
         response = twic_session.get(
             f"https://theweekinchess.com/zips/{twic_zip}")
         log.warning(f"{twic_pgn} Missing!")
@@ -135,7 +136,8 @@ def download_twic_pgn(twic_session, twic_row):
             # Delete the zip (we'll have copy in cache)
         if(os.path.exists(f"./twic_downloads/{twic_pgn}")):
             os.remove(f"./twic_downloads/{twic_zip}")
-        push = pb.push_link("New Chess Games!", f"https://theweekinchess.com/html/{twic_id}.html")
+        push = pb.push_link("New Chess Games!",
+                            f"https://theweekinchess.com/html/{twic_id}.html")
 
     else:
         # Yes we have the file, just print OK.
