@@ -137,7 +137,7 @@ def download_twic_pgn(twic_session, twic_row):
         if(os.path.exists(f"./twic_downloads/{twic_pgn}")):
             os.remove(f"./twic_downloads/{twic_zip}")
         push = pb.push_link("New Chess Games!",
-                            f"https://theweekinchess.com/html/{twic_id}.html")
+                            f"https://theweekinchess.com/html/twic{twic_id}.html")
 
     else:
         # Yes we have the file, just print OK.
