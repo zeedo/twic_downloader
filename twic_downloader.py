@@ -51,6 +51,7 @@ def main():
         # to download.
         for _, twic_row in twic_downloads_table.iterrows():  # Throw away the index
             download_twic_pgn(twic_session, twic_row)
+        combine_all_pgns()
     else:
         exit()
 
@@ -156,6 +157,14 @@ def check_cached(response):
     else:
         log.info("....... Downloaded")
 
+def combine_all_pgns():
+    file_list = glob.glob('twic_downloads/*.pgn')
+    print(file_list)
+    with open('twic-all.pgn', 'w') as outfile:
+        for fname in file_list:
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
 
 if __name__ == "__main__":
     main()
