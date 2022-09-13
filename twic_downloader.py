@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from pushbullet import API as Pushbullet
 from rich.logging import RichHandler
 from sqlitedict import SqliteDict
+import glob
 
 # Get config info from .env files.
 load_dotenv()
@@ -157,6 +158,7 @@ def check_cached(response):
     else:
         log.info("....... Downloaded")
 
+# Todo make more efficient. We could just add the last file somehow
 def combine_all_pgns():
     file_list = glob.glob('twic_downloads/*.pgn')
     print(file_list)
