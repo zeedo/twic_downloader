@@ -1,5 +1,7 @@
+import glob
 import logging
 import os
+import shutil
 import zipfile
 from datetime import timedelta
 
@@ -10,7 +12,6 @@ from dotenv import load_dotenv
 from pushbullet import API as Pushbullet
 from rich.logging import RichHandler
 from sqlitedict import SqliteDict
-import glob
 
 # Get config info from .env files.
 load_dotenv()
@@ -39,20 +40,27 @@ log = logging.getLogger(__name__)
 
 def main():
 
+    if FORCE_SKIP_NEW_GAMES_CHECK == "1":
+    # delete twic-all.pgn file
+        files = glob.glob('./twic-all.pgn')
+        for f in files:
+            os.remove(f)
+        
     twic_session = setup_twic_session()
 
     response = download_main_page(twic_session)
+
 
     twic_downloads_table = parse_downloads_table(response)
 
     # Dotenv doesn't do booleans - just strings
     if check_new_twic_issue(twic_downloads_table) or FORCE_SKIP_NEW_GAMES_CHECK == "1":
+
         # Run through each item in the table
         # We could just download the newest, but we're checking incase me miss a run and there's more than one game
         # to download.
         for _, twic_row in twic_downloads_table.iterrows():  # Throw away the index
             download_twic_pgn(twic_session, twic_row)
-        combine_all_pgns()
     else:
         exit()
 
@@ -83,6 +91,8 @@ def parse_downloads_table(response):
     twic_downloads_table = tables[0]
     # First line in the DB is a bit messy, so label the column headings we need for clarity.
     twic_downloads_table.columns = ["TWIC_ID", "Date", 2, 3, 4, 5, 6, 7]
+    # remove " V2" from all fields in the Date column
+    twic_downloads_table["Date"] = twic_downloads_table["Date"].str.replace(" V2", "")
     twic_downloads_table["Date"] = pd.to_datetime(twic_downloads_table["Date"], format='%d/%m/%Y')
     return twic_downloads_table
 
@@ -145,7 +155,12 @@ def download_twic_pgn(twic_session, twic_row):
             # Delete the zip (we'll have copy in cache)
         if os.path.exists(f"./twic_downloads/{twic_pgn}"):
             os.remove(f"./twic_downloads/{twic_zip}")
-        push = pb.send_link(title="New Chess Games!", body=f"This Week in Chess: {twic_id}", url_to_send=f"https://theweekinchess.com/html/twic{twic_id}.html")
+        # contatenate binary files
+
+        with open('twic-all.pgn', 'ab') as wfd:
+            with open(f"./twic_downloads/{twic_pgn}", 'rb') as fd:
+                shutil.copyfileobj(fd, wfd, 1024 * 1024 * 10)
+        pb.send_link(title="New Chess Games!", body=f"This Week in Chess: {twic_id}", url_to_send=f"https://theweekinchess.com/html/twic{twic_id}.html")
 
     else:
         # Yes we have the file, just print OK.
@@ -157,16 +172,6 @@ def check_cached(response):
         log.warning(f"....... (CACHED! Expires {response.expires})")
     else:
         log.info("....... Downloaded")
-
-# Todo make more efficient. We could just add the last file somehow
-def combine_all_pgns():
-    file_list = glob.glob('twic_downloads/*.pgn')
-    print(file_list)
-    with open('twic-all.pgn', 'w') as outfile:
-        for fname in file_list:
-            with open(fname) as infile:
-                for line in infile:
-                    outfile.write(line)
 
 if __name__ == "__main__":
     main()
